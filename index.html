@@ -23,7 +23,7 @@
             width: 100vw;
         }
 
-        /* Canvas de Espacio / Galaxia */
+        /* Canvas de Espacio / Galaxia / Viaje */
         #galaxyCanvas {
             position: absolute;
             top: 0;
@@ -31,6 +31,66 @@
             width: 100%;
             height: 100%;
             z-index: 1;
+        }
+
+        /* Pantalla de Inicio / Intro */
+        .intro-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(3, 1, 7, 0.6);
+            backdrop-filter: blur(4px);
+            transition: opacity 1s ease, visibility 1s ease;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .intro-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .intro-title {
+            font-family: 'Caveat', cursive;
+            font-size: 52px;
+            color: #fff176;
+            text-shadow: 0 0 20px rgba(255, 235, 59, 0.8);
+            margin-bottom: 15px;
+        }
+
+        .intro-sub {
+            font-size: 16px;
+            color: #e0e0e0;
+            max-width: 400px;
+            margin-bottom: 35px;
+            line-height: 1.6;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #ffd54f 0%, #ffb300 100%);
+            color: #2c1b00;
+            border: none;
+            padding: 16px 36px;
+            border-radius: 40px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(255, 213, 79, 0.8);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .btn-start:hover {
+            transform: scale(1.08);
+            box-shadow: 0 0 45px rgba(255, 213, 79, 1);
         }
 
         /* Contenedor de la Galaxia 3D */
@@ -44,6 +104,12 @@
             z-index: 2;
             pointer-events: none;
             perspective: 1000px;
+            opacity: 0;
+            transition: opacity 2s ease;
+        }
+
+        .universe-container.visible {
+            opacity: 1;
         }
 
         /* Centro de la Galaxia */
@@ -81,13 +147,12 @@
             color: #fff176;
             padding: 6px 18px;
             border-radius: 30px;
-            font-size: 16px;
+            font-size: 22px;
             font-weight: 700;
             margin-top: 5px;
             box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
             backdrop-filter: blur(6px);
             font-family: 'Caveat', cursive;
-            font-size: 22px;
         }
 
         @keyframes pulseHeart {
@@ -251,10 +316,22 @@
             pointer-events: none;
             letter-spacing: 0.5px;
             box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+            opacity: 0;
+            transition: opacity 1.5s ease;
+        }
+
+        .instructions.visible {
+            opacity: 1;
         }
     </style>
 </head>
 <body>
+
+    <div class="intro-screen" id="introScreen">
+        <h1 class="intro-title">Un Viaje por el Universo 🌻</h1>
+        <p class="intro-sub">Tengo un pequeño detalle preparado para ti. Haz clic abajo para iniciar un recorrido por las estrellas...</p>
+        <button class="btn-start" onclick="startJourney()">Comenzar recorrido ✨</button>
+    </div>
 
     <canvas id="galaxyCanvas"></canvas>
 
@@ -266,19 +343,22 @@
         </div>
     </div>
 
-    <div class="instructions">✨ Presiona cada flor para descubrir un detalle ✨</div>
+    <div class="instructions" id="instructions">✨ Presiona cada flor para descubrir un detalle ✨</div>
 
     <div class="modal-overlay" id="cardModal">
-        <div class="card" id="cardContent">
-            </div>
+        <div class="card" id="cardContent"></div>
     </div>
 
     <script>
-        // Configuración de Canvas (Fondo de Espacio con Espiral Dorada)
         const canvas = document.getElementById('galaxyCanvas');
         const ctx = canvas.getContext('2d');
 
-        let width, height, stars = [], particles = [];
+        let width, height;
+        let starField = [];
+        let particles = [];
+        let isWarping = false;
+        let speedMultiplier = 1;
+        let isGalaxyMode = false;
 
         function resizeCanvas() {
             width = canvas.width = window.innerWidth;
@@ -287,19 +367,19 @@
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        // Estrellas
-        for (let i = 0; i < 400; i++) {
-            stars.push({
-                x: Math.random() * width - width / 2,
-                y: Math.random() * height - height / 2,
-                size: Math.random() * 2,
-                color: Math.random() > 0.2 ? '#ffffff' : '#fff59d',
-                alpha: Math.random(),
-                speed: Math.random() * 0.02 + 0.005
+        // Crear estrellas para el efecto de vuelo 3D (Warp Speed)
+        const numStars = 600;
+        for (let i = 0; i < numStars; i++) {
+            starField.push({
+                x: (Math.random() - 0.5) * width * 2,
+                y: (Math.random() - 0.5) * height * 2,
+                z: Math.random() * width,
+                size: Math.random() * 1.5 + 0.5,
+                color: Math.random() > 0.3 ? '#ffffff' : '#fff59d'
             });
         }
 
-        // Partículas Espirales de la Galaxia Dorada
+        // Partículas Espirales para cuando llegue a la Galaxia
         for (let i = 0; i < 800; i++) {
             const angle = Math.random() * Math.PI * 2;
             const dist = Math.random() * (Math.min(width, height) * 0.48);
@@ -312,40 +392,111 @@
             });
         }
 
-        function renderGalaxy() {
-            ctx.fillStyle = 'rgba(3, 1, 7, 0.25)';
+        // Bucle Principal de Animación Canvas
+        function render() {
+            ctx.fillStyle = 'rgba(3, 1, 7, 0.3)';
             ctx.fillRect(0, 0, width, height);
 
             const cx = width / 2;
             const cy = height / 2;
 
-            // Renderizar Estrellas
-            stars.forEach(s => {
-                s.alpha += s.speed;
-                if (s.alpha > 1 || s.alpha < 0) s.speed = -s.speed;
-                ctx.fillStyle = s.color;
-                ctx.globalAlpha = Math.abs(s.alpha);
-                ctx.beginPath();
-                ctx.arc(cx + s.x, cy + s.y, s.size, 0, Math.PI * 2);
-                ctx.fill();
-            });
+            if (!isGalaxyMode) {
+                // Modo Vuelo por el Universo / Hiperespacio
+                starField.forEach(s => {
+                    s.z -= 2 * speedMultiplier;
+                    if (s.z <= 0) {
+                        s.z = width;
+                        s.x = (Math.random() - 0.5) * width * 2;
+                        s.y = (Math.random() - 0.5) * height * 2;
+                    }
 
-            // Renderizar Espiral
-            particles.forEach(p => {
-                p.angle += p.speed * 0.25;
-                const x = cx + Math.cos(p.angle) * p.dist;
-                const y = cy + Math.sin(p.angle) * (p.dist * 0.52);
+                    const k = 250 / s.z;
+                    const px = s.x * k + cx;
+                    const py = s.y * k + cy;
 
-                ctx.fillStyle = p.color;
-                ctx.globalAlpha = 0.8;
-                ctx.beginPath();
-                ctx.arc(x, y, p.size, 0, Math.PI * 2);
-                ctx.fill();
-            });
+                    if (px >= 0 && px <= width && py >= 0 && py <= height) {
+                        const size = Math.max(0.1, (1 - s.z / width) * 3 * (speedMultiplier > 5 ? 1.5 : 1));
+                        ctx.fillStyle = s.color;
+                        ctx.beginPath();
 
-            requestAnimationFrame(renderGalaxy);
+                        if (speedMultiplier > 5) {
+                            // Efecto de estela de velocidad
+                            const prevK = 250 / (s.z + 20 * speedMultiplier);
+                            const ppx = s.x * prevK + cx;
+                            const ppy = s.y * prevK + cy;
+                            ctx.strokeStyle = s.color;
+                            ctx.lineWidth = size;
+                            ctx.moveTo(px, py);
+                            ctx.lineTo(ppx, ppy);
+                            ctx.stroke();
+                        } else {
+                            ctx.arc(px, py, size, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                });
+            } else {
+                // Modo Galaxia de Flores
+                starField.forEach(s => {
+                    s.z -= 0.5;
+                    if (s.z <= 0) s.z = width;
+                    const k = 250 / s.z;
+                    const px = s.x * k + cx;
+                    const py = s.y * k + cy;
+                    if (px >= 0 && px <= width && py >= 0 && py <= height) {
+                        ctx.fillStyle = s.color;
+                        ctx.beginPath();
+                        ctx.arc(px, py, 1.2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                });
+
+                // Renderizar la espiral dorada
+                particles.forEach(p => {
+                    p.angle += p.speed * 0.25;
+                    const x = cx + Math.cos(p.angle) * p.dist;
+                    const y = cy + Math.sin(p.angle) * (p.dist * 0.52);
+
+                    ctx.fillStyle = p.color;
+                    ctx.globalAlpha = 0.8;
+                    ctx.beginPath();
+                    ctx.arc(x, y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
+
+            requestAnimationFrame(render);
         }
-        renderGalaxy();
+        render();
+
+        // Iniciar Recorrido
+        function startJourney() {
+            document.getElementById('introScreen').classList.add('hidden');
+            
+            // Acelerar estrellas (Efecto de velocidad hiperespacial)
+            let accelInterval = setInterval(() => {
+                speedMultiplier += 0.8;
+                if (speedMultiplier >= 15) {
+                    clearInterval(accelInterval);
+                    
+                    // Mantener velocidad un momento y luego desacelerar al llegar
+                    setTimeout(() => {
+                        let decelInterval = setInterval(() => {
+                            speedMultiplier -= 0.8;
+                            if (speedMultiplier <= 1) {
+                                speedMultiplier = 1;
+                                clearInterval(decelInterval);
+                                isGalaxyMode = true;
+                                
+                                // Mostrar elementos de la Galaxia
+                                document.getElementById('universe').classList.add('visible');
+                                document.getElementById('instructions').classList.add('visible');
+                            }
+                        }, 50);
+                    }, 1800);
+                }
+            }, 50);
+        }
 
         // Datos de Flores adaptados a "Conociéndonos de a pocos"
         const flowersData = [
@@ -390,24 +541,25 @@
 
         // Animación Orbital 3D
         function animateOrbit() {
-            const rx = Math.min(window.innerWidth, window.innerHeight) * 0.40;
-            const ry = rx * 0.52;
+            if (isGalaxyMode) {
+                const rx = Math.min(window.innerWidth, window.innerHeight) * 0.40;
+                const ry = rx * 0.52;
 
-            flowerElements.forEach((item) => {
-                item.angle += item.speed;
-                const x = Math.cos(item.angle) * rx;
-                const y = Math.sin(item.angle) * ry;
+                flowerElements.forEach((item) => {
+                    item.angle += item.speed;
+                    const x = Math.cos(item.angle) * rx;
+                    const y = Math.sin(item.angle) * ry;
 
-                const scale = 0.75 + (y / ry) * 0.35;
-                const opacity = 0.6 + (y / ry) * 0.4;
+                    const scale = 0.75 + (y / ry) * 0.35;
+                    const opacity = 0.6 + (y / ry) * 0.4;
 
-                item.element.style.left = `calc(50% + ${x}px - 30px)`;
-                item.element.style.top = `calc(50% + ${y}px - 30px)`;
-                item.element.style.transform = `scale(${scale})`;
-                item.element.style.opacity = opacity;
-                item.element.style.zIndex = Math.round((y + ry) * 10);
-            });
-
+                    item.element.style.left = `calc(50% + ${x}px - 30px)`;
+                    item.element.style.top = `calc(50% + ${y}px - 30px)`;
+                    item.element.style.transform = `scale(${scale})`;
+                    item.element.style.opacity = opacity;
+                    item.element.style.zIndex = Math.round((y + ry) * 10);
+                });
+            }
             requestAnimationFrame(animateOrbit);
         }
         animateOrbit();
