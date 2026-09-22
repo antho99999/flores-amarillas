@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Un Detalle Especial 🌻✨</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Montserrat:wght@400;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background-color: #030107;
+            overflow: hidden;
+            font-family: 'Montserrat', sans-serif;
+            color: #fff;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Canvas de Espacio / Galaxia */
+        #galaxyCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Contenedor de la Galaxia 3D */
+        .universe-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+            perspective: 1000px;
+        }
+
+        /* Centro de la Galaxia */
+        .galaxy-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: auto;
+            text-align: center;
+            cursor: pointer;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .heart-particles {
+            font-size: 75px;
+            color: #ffe600;
+            text-shadow: 0 0 20px #ffea00, 0 0 40px #ffaa00, 0 0 80px #ff8800;
+            animation: pulseHeart 1.8s infinite ease-in-out;
+            margin-bottom: -15px;
+        }
+
+        .center-bouquet {
+            font-size: 80px;
+            filter: drop-shadow(0 0 25px rgba(255, 230, 0, 0.9));
+            animation: floatBouquet 3s infinite ease-in-out;
+        }
+
+        .center-label {
+            background: rgba(15, 10, 0, 0.85);
+            border: 2px solid #ffd700;
+            color: #fff176;
+            padding: 6px 18px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 700;
+            margin-top: 5px;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+            backdrop-filter: blur(6px);
+            font-family: 'Caveat', cursive;
+            font-size: 22px;
+        }
+
+        @keyframes pulseHeart {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(255, 230, 0, 0.8)); }
+            50% { transform: scale(1.18); filter: drop-shadow(0 0 35px rgba(255, 215, 0, 1)); }
+        }
+
+        @keyframes floatBouquet {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Elementos de Flores en Órbita */
+        .flower-item {
+            position: absolute;
+            pointer-events: auto;
+            cursor: pointer;
+            transition: transform 0.3s ease, filter 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .flower-item:hover {
+            transform: scale(1.35) !important;
+            filter: drop-shadow(0 0 30px #ffe600);
+            z-index: 100;
+        }
+
+        .flower-icon {
+            font-size: 50px;
+            filter: drop-shadow(0 0 15px rgba(255, 221, 0, 0.85));
+        }
+
+        .flower-label {
+            background: rgba(10, 8, 2, 0.8);
+            border: 1px solid rgba(255, 230, 0, 0.6);
+            color: #ffffff;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 4px;
+            white-space: nowrap;
+            box-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
+            backdrop-filter: blur(4px);
+        }
+
+        /* Modales / Tarjetas Emergentes */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.82);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .card {
+            background: linear-gradient(145deg, #fffde7 0%, #fff176 50%, #fbc02d 100%);
+            color: #2c1b00;
+            padding: 28px 24px;
+            border-radius: 28px;
+            max-width: 380px;
+            width: 88%;
+            text-align: center;
+            box-shadow: 0 0 60px rgba(255, 235, 59, 0.8), inset 0 0 15px rgba(255, 255, 255, 0.9);
+            border: 4px solid #f57f17;
+            transform: scale(0.7) translateY(40px);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .modal-overlay.active .card {
+            transform: scale(1) translateY(0);
+        }
+
+        .card h2 {
+            font-family: 'Caveat', cursive;
+            color: #d84315;
+            font-size: 38px;
+            margin-bottom: 8px;
+            line-height: 1;
+        }
+
+        .card p {
+            font-size: 15px;
+            line-height: 1.5;
+            color: #3e2723;
+            margin-bottom: 18px;
+            font-weight: 600;
+        }
+
+        .card .big-highlight {
+            font-family: 'Caveat', cursive;
+            font-size: 32px;
+            color: #b71c1c;
+            font-weight: bold;
+            margin: 10px 0;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6);
+        }
+
+        .card-graphic {
+            font-size: 65px;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.15));
+        }
+
+        .photo-frame {
+            background: #fff;
+            padding: 10px;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            margin: 12px 0;
+            border: 2px dashed #f57f17;
+        }
+
+        .btn-close {
+            background: #e65100;
+            color: white;
+            border: none;
+            padding: 10px 32px;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 18px rgba(230, 81, 0, 0.5);
+            transition: all 0.2s;
+        }
+
+        .btn-close:hover {
+            background: #bf360c;
+            transform: scale(1.06);
+        }
+
+        .instructions {
+            position: absolute;
+            bottom: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            background: rgba(10, 8, 2, 0.75);
+            padding: 8px 22px;
+            border-radius: 25px;
+            border: 1px solid rgba(255, 215, 0, 0.5);
+            font-size: 13px;
+            color: #fffde7;
+            pointer-events: none;
+            letter-spacing: 0.5px;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="galaxyCanvas"></canvas>
+
+    <div class="universe-container" id="universe">
+        <div class="galaxy-center" onclick="openSpecialCard()">
+            <div class="heart-particles">✨</div>
+            <div class="center-bouquet">💐</div>
+            <div class="center-label">Para ti 🌻</div>
+        </div>
+    </div>
+
+    <div class="instructions">✨ Presiona cada flor para descubrir un detalle ✨</div>
+
+    <div class="modal-overlay" id="cardModal">
+        <div class="card" id="cardContent">
+            </div>
+    </div>
+
+    <script>
+        // Configuración de Canvas (Fondo de Espacio con Espiral Dorada)
+        const canvas = document.getElementById('galaxyCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height, stars = [], particles = [];
+
+        function resizeCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Estrellas
+        for (let i = 0; i < 400; i++) {
+            stars.push({
+                x: Math.random() * width - width / 2,
+                y: Math.random() * height - height / 2,
+                size: Math.random() * 2,
+                color: Math.random() > 0.2 ? '#ffffff' : '#fff59d',
+                alpha: Math.random(),
+                speed: Math.random() * 0.02 + 0.005
+            });
+        }
+
+        // Partículas Espirales de la Galaxia Dorada
+        for (let i = 0; i < 800; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = Math.random() * (Math.min(width, height) * 0.48);
+            particles.push({
+                angle: angle + (dist * 0.004),
+                dist: dist,
+                size: Math.random() * 2.8 + 0.5,
+                color: `hsla(${40 + Math.random() * 25}, 100%, ${55 + Math.random() * 35}%, ${Math.random() * 0.85})`,
+                speed: (0.002 + (1 / (dist + 10)) * 0.6)
+            });
+        }
+
+        function renderGalaxy() {
+            ctx.fillStyle = 'rgba(3, 1, 7, 0.25)';
+            ctx.fillRect(0, 0, width, height);
+
+            const cx = width / 2;
+            const cy = height / 2;
+
+            // Renderizar Estrellas
+            stars.forEach(s => {
+                s.alpha += s.speed;
+                if (s.alpha > 1 || s.alpha < 0) s.speed = -s.speed;
+                ctx.fillStyle = s.color;
+                ctx.globalAlpha = Math.abs(s.alpha);
+                ctx.beginPath();
+                ctx.arc(cx + s.x, cy + s.y, s.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Renderizar Espiral
+            particles.forEach(p => {
+                p.angle += p.speed * 0.25;
+                const x = cx + Math.cos(p.angle) * p.dist;
+                const y = cy + Math.sin(p.angle) * (p.dist * 0.52);
+
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = 0.8;
+                ctx.beginPath();
+                ctx.arc(x, y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            requestAnimationFrame(renderGalaxy);
+        }
+        renderGalaxy();
+
+        // Datos de Flores adaptados a "Conociéndonos de a pocos"
+        const flowersData = [
+            { icon: "🌻", label: "Me alegras el día ☀️", title: "Un bonito comienzo:", msg: "Hablar contigo siempre me saca una sonrisa. Me encanta cómo poco a poco voy conociéndote." },
+            { icon: "💐", label: "Paso a paso 🚶‍♂️", title: "Sin prisas:", msg: "Me gusta mucho el ritmo que llevamos. Disfruto cada conversación y cada momento que compartimos." },
+            { icon: "🌻", label: "Tu sonrisa 😊", title: "Un detalle especial:", msg: "Tienes una sonrisa increíble que contagia mucha buena vibra. Nunca dejes de sonreír." },
+            { icon: "💐", label: "Me encantas ✨", title: "Poco a poco:", msg: "Cada día descubro algo nuevo de ti que me parece genial. Es muy lindo conocerte." },
+            { icon: "🌻", label: "Buena vibra 🌟", title: "Tu compañía:", msg: "Transmites una tranquilidad y alegría muy bonita. Me hace muy bien hablar contigo." },
+            { icon: "💐", label: "Especial 🌸", title: "Para ti:", msg: "No quería que te quedaras sin tus flores amarillas. Te mereces este y muchos detalles bonitos." },
+            { icon: "🌻", label: "Conversaciones ☕", title: "Momentos geniales:", msg: "Me encanta el tiempo que nos tomamos para platicar. Todo fluye de una manera muy natural." },
+            { icon: "💐", label: "Un lindo viaje 🚀", title: "Descubriéndote:", msg: "Es genial descubrir tus gustos, tus historias y lo que te hace feliz." },
+            { icon: "🌻", label: "Eres genial 💫", title: "Tan tú:", msg: "Eres una persona súper interesante y auténtica. Me alegra mucho haberte conocido." }
+        ];
+
+        const universe = document.getElementById('universe');
+        const flowerElements = [];
+        const totalFlowers = flowersData.length;
+
+        // Generar flores orbitales
+        flowersData.forEach((data, index) => {
+            const angle = (index / totalFlowers) * Math.PI * 2;
+            const el = document.createElement('div');
+            el.className = 'flower-item';
+            el.innerHTML = `
+                <div class="flower-icon">${data.icon}</div>
+                <div class="flower-label">${data.label}</div>
+            `;
+
+            el.addEventListener('click', () => {
+                openModal(data.title, data.msg, false);
+            });
+
+            universe.appendChild(el);
+
+            flowerElements.push({
+                element: el,
+                angle: angle,
+                speed: 0.0018,
+                data: data
+            });
+        });
+
+        // Animación Orbital 3D
+        function animateOrbit() {
+            const rx = Math.min(window.innerWidth, window.innerHeight) * 0.40;
+            const ry = rx * 0.52;
+
+            flowerElements.forEach((item) => {
+                item.angle += item.speed;
+                const x = Math.cos(item.angle) * rx;
+                const y = Math.sin(item.angle) * ry;
+
+                const scale = 0.75 + (y / ry) * 0.35;
+                const opacity = 0.6 + (y / ry) * 0.4;
+
+                item.element.style.left = `calc(50% + ${x}px - 30px)`;
+                item.element.style.top = `calc(50% + ${y}px - 30px)`;
+                item.element.style.transform = `scale(${scale})`;
+                item.element.style.opacity = opacity;
+                item.element.style.zIndex = Math.round((y + ry) * 10);
+            });
+
+            requestAnimationFrame(animateOrbit);
+        }
+        animateOrbit();
+
+        // Control del Modal
+        const modal = document.getElementById('cardModal');
+        const cardContent = document.getElementById('cardContent');
+
+        function openModal(title, message, isSpecial = false) {
+            if (isSpecial) {
+                cardContent.innerHTML = `
+                    <div class="photo-frame">
+                        <div style="font-size: 50px;">🌻✨💛</div>
+                    </div>
+                    <h2>Hola...</h2>
+                    <p>Sé que nos estamos conociendo de a pocos, pero no podía dejar pasar este día sin darte un detalle especial.</p>
+                    <p>Espero que te saque una bonita sonrisa al verlo.</p>
+                    <div class="big-highlight">¡Feliz Día de las Flores Amarillas!</div>
+                    <p style="font-size: 13px; color: #6d4c41;">Gracias por compartir tu tiempo conmigo y por dejarme conocerte 💛</p>
+                    <button class="btn-close" onclick="closeModal()">Cerrar ✨</button>
+                `;
+            } else {
+                cardContent.innerHTML = `
+                    <div class="card-graphic">🌻</div>
+                    <h2>${title}</h2>
+                    <p>${message}</p>
+                    <div class="big-highlight">Un gran detalle para ti 💛</div>
+                    <button class="btn-close" onclick="closeModal()">Cerrar ✨</button>
+                `;
+            }
+
+            modal.classList.add('active');
+        }
+
+        function openSpecialCard() {
+            openModal("", "", true);
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+    </script>
+</body>
+</html>
